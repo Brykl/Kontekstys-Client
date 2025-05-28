@@ -10,15 +10,16 @@ const HomePage: React.FC = () => {
           position="static"
           elevation={3}
           sx={{
-            backgroundImage: `linear-gradient(rgba(66, 65, 65, 0.6), rgba(41, 40, 40, 0.6)), url(${paperImage})`,
+            backgroundImage: `url(${paperImage})`,
             backgroundSize: "cover contented",
             backgroundPosition: "center",
-            color: "#fceabb",
+            color: "#1e1e1f",
+            backdropFilter: "blur(3px)",
           }}
         >
           <Toolbar>
             <Typography
-              variant="h5"
+              variant="h6"
               component="div"
               sx={{ flexGrow: 1, fontWeight: "bold" }}
             >
@@ -30,7 +31,7 @@ const HomePage: React.FC = () => {
             <Button
               color="inherit"
               variant="outlined"
-              sx={{ borderColor: "#fceabb", color: "#fceabb" }}
+              sx={{ borderColor: "#1e1e1f", color: "#1e1e1f" }}
             >
               Регистрация
             </Button>
