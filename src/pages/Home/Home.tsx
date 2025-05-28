@@ -6,10 +6,19 @@ const HomePage: React.FC = () => {
   return (
     <>
       <Box sx={{ overflow: "hidden", height: "100vh", width: "100vw" }}>
-        <AppBar position="static" elevation={3} sx={{ bgcolor: "#591434" }}>
+        <AppBar
+          position="static"
+          elevation={3}
+          sx={{
+            backgroundImage: `linear-gradient(rgba(66, 65, 65, 0.6), rgba(41, 40, 40, 0.6)), url(${paperImage})`,
+            backgroundSize: "cover contented",
+            backgroundPosition: "center",
+            color: "#fceabb",
+          }}
+        >
           <Toolbar>
             <Typography
-              variant="h6"
+              variant="h5"
               component="div"
               sx={{ flexGrow: 1, fontWeight: "bold" }}
             >
@@ -21,7 +30,7 @@ const HomePage: React.FC = () => {
             <Button
               color="inherit"
               variant="outlined"
-              sx={{ borderColor: "white", color: "white" }}
+              sx={{ borderColor: "#fceabb", color: "#fceabb" }}
             >
               Регистрация
             </Button>
