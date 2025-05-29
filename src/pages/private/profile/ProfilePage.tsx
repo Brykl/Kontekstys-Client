@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -13,6 +14,9 @@ import paperImage from "../../../assets/homePage/paper.avif";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
 import { getPosBName } from "../../../controllers/allProfPost";
 import AppBarPrivate from "../components/AppBar";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
+import PostCard from "../components/PostCard";
 
 interface Post {
   id: number;
@@ -161,33 +165,24 @@ const ProfilePage: React.FC = () => {
               },
             }}
           >
-            {posts.map((post) => (
-              <Paper
-                key={post.id}
-                elevation={3}
-                sx={{
-                  p: 2,
-                  backgroundImage: `url(${paperImage})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  borderRadius: 3,
-                  backdropFilter: "blur(3px)",
-                }}
-              >
-                <Typography variant="h6">{post.title}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {new Date(post.created_at).toLocaleString()}
-                </Typography>
-                <Typography variant="body1" sx={{ mt: 1 }}>
-                  {post.description}
-                </Typography>
-                {post.was_edited && (
-                  <Typography variant="caption" color="warning.main">
-                    (редактировалось)
-                  </Typography>
-                )}
-              </Paper>
-            ))}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                mt: 2,
+                maxHeight: "70vh",
+                overflowY: "auto",
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": {
+                  display: "none",
+                },
+              }}
+            >
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </Box>
           </Box>
         </Box>
         {/* Карточка профиля */}

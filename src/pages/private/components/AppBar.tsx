@@ -6,6 +6,7 @@ import Person2Icon from "@mui/icons-material/Person2";
 import GroupIcon from "@mui/icons-material/Group";
 import ChatIcon from "@mui/icons-material/Chat";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ArticleIcon from "@mui/icons-material/Article";
 
 export default function AppBarPrivate(): JSX.Element {
   const navigate = useNavigate();
@@ -53,6 +54,10 @@ export default function AppBarPrivate(): JSX.Element {
         <Box
           sx={{ display: "flex", gap: 2, alignItems: "center", flexGrow: 1 }}
         >
+          <Box sx={navItemStyle}>
+            <ArticleIcon fontSize="small" />
+            <Typography variant="body1">Посты</Typography>
+          </Box>
           <Box sx={navItemStyle}>
             <Person2Icon fontSize="small" />
             <Typography variant="body1">Профиль</Typography>
