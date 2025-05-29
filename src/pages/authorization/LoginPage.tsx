@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3891/api/auth/login",
+        "http://172.30.253.7:3891/api/auth/login",
         {
           username,
           password,
@@ -25,9 +25,13 @@ const LoginPage: React.FC = () => {
       );
 
       if (response.status === 200) {
-        const { token } = response.data;
+        const { token, user } = response.data;
+        const userName: string = await user.user_name;
+
         localStorage.setItem("token", token);
-        navigate("/profile", { replace: true });
+        navigate(`/profile/${userName}`, {
+          replace: true,
+        });
       } else {
         setError("Не удалось войти. Попробуйте снова.");
       }
@@ -47,7 +51,7 @@ const LoginPage: React.FC = () => {
         elevation={3}
         sx={{
           backgroundImage: `url(${paperImage})`,
-          backgroundSize: "cover",
+          backgroundSize: "cover contented",
           backgroundPosition: "center",
           color: "#1e1e1f",
           backdropFilter: "blur(3px)",
@@ -56,8 +60,17 @@ const LoginPage: React.FC = () => {
         <Toolbar>
           <Typography
             variant="h6"
-            component="div"
-            sx={{ flexGrow: 1, fontWeight: "bold" }}
+            component={Link}
+            to="/"
+            sx={{
+              flexGrow: 1,
+              fontWeight: "bold",
+              color: "#591434",
+              textDecoration: "none",
+              ":hover": {
+                textDecoration: "underline",
+              },
+            }}
           >
             Контекстус
           </Typography>

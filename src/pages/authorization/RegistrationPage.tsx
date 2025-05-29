@@ -12,6 +12,8 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import paperImage from "../../assets/homePage/paper.avif";
 import bagr1 from "../../assets/homePage/treygol1.jpg";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const serverAddress = import.meta.env.VITE_SERVER_URL;
 
 const RegistrationPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -31,7 +33,7 @@ const RegistrationPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3891/api/auth/register", {
+      const response = await fetch(`${serverAddress}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,7 +68,7 @@ const RegistrationPage: React.FC = () => {
         elevation={3}
         sx={{
           backgroundImage: `url(${paperImage})`,
-          backgroundSize: "cover",
+          backgroundSize: "cover contented",
           backgroundPosition: "center",
           color: "#1e1e1f",
           backdropFilter: "blur(3px)",
@@ -75,8 +77,17 @@ const RegistrationPage: React.FC = () => {
         <Toolbar>
           <Typography
             variant="h6"
-            component="div"
-            sx={{ flexGrow: 1, fontWeight: "bold" }}
+            component={Link} // Делаем Typography кликабельным через Link
+            to="/"
+            sx={{
+              flexGrow: 1,
+              fontWeight: "bold",
+              color: "#591434",
+              textDecoration: "none",
+              ":hover": {
+                textDecoration: "underline",
+              },
+            }}
           >
             Контекстус
           </Typography>

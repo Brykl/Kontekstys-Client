@@ -1,6 +1,7 @@
 import { AppBar, Toolbar, Typography, Button, Paper, Box } from "@mui/material";
 import paperImage from "../../assets/homePage/paper.avif";
 import bagr1 from "../../assets/homePage/treygol1.jpg";
+import { Link } from "react-router-dom";
 
 const HomePage: React.FC = () => {
   return (
@@ -25,10 +26,12 @@ const HomePage: React.FC = () => {
             >
               Контекстус
             </Typography>
-            <Button color="inherit" sx={{ mr: 1 }}>
+            <Button component={Link} to="/login" color="inherit" sx={{ mr: 1 }}>
               Вход
             </Button>
             <Button
+              component={Link}
+              to="/registration"
               color="inherit"
               variant="outlined"
               sx={{ borderColor: "#1e1e1f", color: "#1e1e1f" }}

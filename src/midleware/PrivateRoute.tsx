@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { CircularProgress, Box } from "@mui/material";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const serverAddress = import.meta.env.VITE_SERVER_URL;
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -20,7 +22,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
 
       try {
         const response = await axios.post(
-          "http://localhost:3891/api/verify",
+          `${serverAddress}/api/verify`,
           {},
           {
             headers: {
