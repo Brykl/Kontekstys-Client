@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import axios from "axios";
 import { Paper, Typography, Box } from "@mui/material";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
@@ -19,19 +20,92 @@ interface Props {
   post: Post;
 }
 
+const API_CREATE = "http://172.30.253.7:3891/api/reactions/create";
+const API_UPDATE = "http://172.30.253.7:3891/api/reactions/update";
+
 const PostCard: React.FC<Props> = ({ post }) => {
-  const isLiked = post.viewer_reaction === "like";
-  const isDisliked = post.viewer_reaction === "dislike";
+  const [likeCount, setLikeCount] = useState<number>(post.like_count);
+  const [dislikeCount, setDislikeCount] = useState<number>(post.dislike_count);
+  const [reaction, setReaction] = useState<"like" | "dislike" | null>(
+    post.viewer_reaction
+  );
 
-  const handleLike = () => {
-    console.log("Лайк:", post.id);
-    // тут будет запрос на сервер
+  const token = localStorage.getItem("token");
+
+  const config = {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+    },
   };
 
-  const handleDislike = () => {
-    console.log("Дизлайк:", post.id);
-    // тут будет запрос на сервер
+  const handleLike = async () => {
+    try {
+      if (reaction === "like") {
+        await axios.put(
+          API_UPDATE,
+          { postId: post.id, reactionType: "none" },
+          config
+        );
+        setLikeCount((prev) => Number(prev) - 1);
+        setReaction(null);
+      } else if (reaction === "dislike") {
+        await axios.put(
+          API_UPDATE,
+          { postId: post.id, reactionType: "like" },
+          config
+        );
+        setLikeCount((prev) => Number(prev) + 1);
+        setDislikeCount((prev) => Number(prev) - 1);
+        setReaction("like");
+      } else {
+        await axios.post(
+          API_CREATE,
+          { postId: post.id, reactionType: "like" },
+          config
+        );
+        setLikeCount((prev) => Number(prev) + 1);
+        setReaction("like");
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  const handleDislike = async () => {
+    try {
+      if (reaction === "dislike") {
+        await axios.put(
+          API_UPDATE,
+          { postId: post.id, reactionType: "none" },
+          config
+        );
+        setDislikeCount((prev) => Number(prev) - 1);
+        setReaction(null);
+      } else if (reaction === "like") {
+        await axios.put(
+          API_UPDATE,
+          { postId: post.id, reactionType: "dislike" },
+          config
+        );
+        setDislikeCount((prev) => Number(prev) + 1);
+        setLikeCount((prev) => Number(prev) - 1);
+        setReaction("dislike");
+      } else {
+        await axios.post(
+          API_CREATE,
+          { postId: post.id, reactionType: "dislike" },
+          config
+        );
+        setDislikeCount((prev) => Number(prev) + 1);
+        setReaction("dislike");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const isLiked = reaction === "like";
+  const isDisliked = reaction === "dislike";
 
   return (
     <Paper
@@ -56,6 +130,7 @@ const PostCard: React.FC<Props> = ({ post }) => {
       <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
         {/* Лайк */}
         <Box
+          onClick={handleLike}
           sx={{
             bgcolor: "#f9f9ff",
             border: "1px solid gray",
@@ -68,29 +143,30 @@ const PostCard: React.FC<Props> = ({ post }) => {
             alignItems: "center",
             justifyContent: "center",
             transition: "all 0.3s",
+            cursor: "pointer",
+            boxShadow: isLiked ? "0 0 10px rgba(0,128,0,0.5)" : undefined,
             "&:hover": {
               boxShadow: "0 0 10px rgba(0, 128, 0, 0.5)",
             },
           }}
         >
           <ThumbUpIcon
-            onClick={handleLike}
             sx={{
               fontSize: "35px",
-              cursor: "pointer",
-              transition: "color 0.3s, transform 0.2s",
               color: isLiked ? "green" : undefined,
+              transition: "color 0.3s, transform 0.2s",
               "&:hover": {
                 color: "green",
                 transform: "scale(1.2)",
               },
             }}
           />
-          <Typography variant="caption">{post.like_count}</Typography>
+          <Typography variant="caption">{likeCount}</Typography>
         </Box>
 
         {/* Дизлайк */}
         <Box
+          onClick={handleDislike}
           sx={{
             bgcolor: "#f9f9ff",
             border: "1px solid gray",
@@ -103,25 +179,25 @@ const PostCard: React.FC<Props> = ({ post }) => {
             alignItems: "center",
             justifyContent: "center",
             transition: "all 0.3s",
+            cursor: "pointer",
+            boxShadow: isDisliked ? "0 0 10px rgba(255,0,0,0.5)" : undefined,
             "&:hover": {
               boxShadow: "0 0 10px rgba(255, 0, 0, 0.5)",
             },
           }}
         >
           <ThumbDownAltIcon
-            onClick={handleDislike}
             sx={{
               fontSize: "35px",
-              cursor: "pointer",
-              transition: "color 0.3s, transform 0.2s",
               color: isDisliked ? "red" : undefined,
+              transition: "color 0.3s, transform 0.2s",
               "&:hover": {
                 color: "red",
                 transform: "scale(1.2)",
               },
             }}
           />
-          <Typography variant="caption">{post.dislike_count}</Typography>
+          <Typography variant="caption">{dislikeCount}</Typography>
         </Box>
       </Box>
 
