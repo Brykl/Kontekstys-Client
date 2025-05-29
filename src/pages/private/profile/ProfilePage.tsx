@@ -12,6 +12,7 @@ import {
 import paperImage from "../../../assets/homePage/paper.avif";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
 import { getPosBName } from "../../../controllers/allProfPost";
+import AppBarPrivate from "../components/AppBar";
 
 interface Post {
   id: number;
@@ -70,7 +71,7 @@ const ProfilePage: React.FC = () => {
       }}
     >
       {/* AppBar */}
-      <AppBar
+      {/* <AppBar
         position="static"
         elevation={3}
         sx={{
@@ -94,9 +95,11 @@ const ProfilePage: React.FC = () => {
             Выйти
           </Button>
         </Toolbar>
-      </AppBar>
+      </AppBar> */}
 
+      <AppBarPrivate />
       {/* Контейнер с фоном под AppBar */}
+
       <Box
         sx={{
           marginTop: 0,
@@ -113,35 +116,6 @@ const ProfilePage: React.FC = () => {
           overflowY: "auto",
         }}
       >
-        {/* Карточка профиля */}
-        <Paper
-          elevation={6}
-          sx={{
-            p: { xs: 2, sm: 4 },
-            maxWidth: "600px",
-            width: "100%",
-            backgroundImage: `url(${paperImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            borderRadius: 3,
-            backdropFilter: "blur(3px)",
-            mb: 4,
-          }}
-        >
-          <Typography
-            variant="h4"
-            component="h1"
-            gutterBottom
-            sx={{ fontWeight: "bold", textAlign: "center" }}
-          >
-            Профиль пользователя
-          </Typography>
-
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Имя пользователя: <strong>{username}</strong>
-          </Typography>
-        </Paper>
-
         {/* Секция постов */}
         <Box
           sx={{
@@ -149,7 +123,16 @@ const ProfilePage: React.FC = () => {
             width: "100%",
           }}
         >
-          <Typography variant="h5" gutterBottom>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{
+              backgroundImage: `url(${paperImage})`,
+              textAlign: "center",
+              borderRadius: 3,
+              backdropFilter: "blur(3px)",
+            }}
+          >
             Посты пользователя
           </Typography>
 
@@ -164,7 +147,20 @@ const ProfilePage: React.FC = () => {
             <Typography sx={{ mt: 2 }}>Нет доступных постов.</Typography>
           )}
 
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: 2,
+              maxHeight: "70vh",
+              overflowY: "auto", // вертикальный скролл, если не помещается
+              scrollbarWidth: "none", // Firefox
+              "&::-webkit-scrollbar": {
+                display: "none", // Chrome, Safari, Edge
+              },
+            }}
+          >
             {posts.map((post) => (
               <Paper
                 key={post.id}
@@ -194,6 +190,34 @@ const ProfilePage: React.FC = () => {
             ))}
           </Box>
         </Box>
+        {/* Карточка профиля */}
+        <Paper
+          elevation={6}
+          sx={{
+            p: { xs: 2, sm: 4 },
+            maxWidth: "600px",
+            width: "25vw",
+            backgroundImage: `url(${paperImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            borderRadius: 3,
+            backdropFilter: "blur(3px)",
+            mb: 4,
+          }}
+        >
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
+            sx={{ fontWeight: "bold", textAlign: "center" }}
+          >
+            Профиль пользователя
+          </Typography>
+
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Имя пользователя: <strong>{username}</strong>
+          </Typography>
+        </Paper>
       </Box>
     </Box>
   );
