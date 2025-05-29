@@ -1,23 +1,75 @@
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AppBar, Toolbar, Typography, Button, Paper, Box } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Paper,
+  Box,
+  CircularProgress,
+} from "@mui/material";
 import paperImage from "../../../assets/homePage/paper.avif";
-// import bagr1 from "../../../assets/private/mainBg.jpg";
-// import bagr1 from "../../../assets/private/v2.jpg";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
+import { getPosBName } from "../../../controllers/allProfPost";
+
+interface Post {
+  id: number;
+  title: string;
+  description: string;
+  created_at: string;
+  was_edited: boolean;
+}
 
 const ProfilePage: React.FC = () => {
-  const { username } = useParams();
+  const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
 
-  // Обработчик выхода
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/", { replace: true });
   };
 
+  useEffect(() => {
+    if (!username) return;
+
+    const fetchPosts = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await getPosBName(username);
+
+        if (response && Array.isArray(response.posts)) {
+          setPosts(response.posts);
+        } else if (Array.isArray(response)) {
+          setPosts(response);
+        } else {
+          setPosts([]);
+        }
+      } catch (err) {
+        setError("Не удалось загрузить посты");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [username]);
+
   return (
-    <Box sx={{ overflow: "hidden", height: "100vh", width: "100vw" }}>
-      {/* Верхняя панель */}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* AppBar */}
       <AppBar
         position="static"
         elevation={3}
@@ -44,20 +96,24 @@ const ProfilePage: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Фоновая зона и карточка профиля */}
+      {/* Контейнер с фоном под AppBar */}
       <Box
         sx={{
-          width: "100vw",
+          marginTop: 0,
+          flex: 1, // занимает оставшееся пространство
           height: "100vh",
           backgroundImage: `url(${bagr1})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
+          p: 3,
           display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          p: 2,
+          justifyContent: "space-around",
+          flexDirection: "row",
+          alignItems: "start",
+          overflowY: "auto",
         }}
       >
+        {/* Карточка профиля */}
         <Paper
           elevation={6}
           sx={{
@@ -69,6 +125,7 @@ const ProfilePage: React.FC = () => {
             backgroundPosition: "center",
             borderRadius: 3,
             backdropFilter: "blur(3px)",
+            mb: 4,
           }}
         >
           <Typography
@@ -83,17 +140,60 @@ const ProfilePage: React.FC = () => {
           <Typography variant="h6" sx={{ mb: 2 }}>
             Имя пользователя: <strong>{username}</strong>
           </Typography>
-
-          <Typography variant="body1" sx={{ mb: 1 }}>
-            Здесь можно будет отобразить вашу личную информацию, посты,
-            настройки и другие данные.
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary">
-            В будущем вы сможете редактировать профиль, управлять подписками и
-            следить за активностью.
-          </Typography>
         </Paper>
+
+        {/* Секция постов */}
+        <Box
+          sx={{
+            maxWidth: "600px",
+            width: "100%",
+          }}
+        >
+          <Typography variant="h5" gutterBottom>
+            Посты пользователя
+          </Typography>
+
+          {loading && <CircularProgress />}
+          {error && (
+            <Typography color="error" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
+
+          {!loading && posts.length === 0 && (
+            <Typography sx={{ mt: 2 }}>Нет доступных постов.</Typography>
+          )}
+
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+            {posts.map((post) => (
+              <Paper
+                key={post.id}
+                elevation={3}
+                sx={{
+                  p: 2,
+                  backgroundImage: `url(${paperImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  borderRadius: 3,
+                  backdropFilter: "blur(3px)",
+                }}
+              >
+                <Typography variant="h6">{post.title}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {new Date(post.created_at).toLocaleString()}
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 1 }}>
+                  {post.description}
+                </Typography>
+                {post.was_edited && (
+                  <Typography variant="caption" color="warning.main">
+                    (редактировалось)
+                  </Typography>
+                )}
+              </Paper>
+            ))}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
