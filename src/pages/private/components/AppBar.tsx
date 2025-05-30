@@ -34,7 +34,7 @@ export default function AppBarPrivate(): JSX.Element {
 
   return (
     <AppBar
-      position="static"
+      position="sticky"
       elevation={3}
       sx={{
         backgroundImage: `url(${paperImage})`,
@@ -54,7 +54,7 @@ export default function AppBarPrivate(): JSX.Element {
         <Box
           sx={{ display: "flex", gap: 2, alignItems: "center", flexGrow: 1 }}
         >
-          <Box sx={navItemStyle}>
+          <Box sx={navItemStyle} onClick={() => navigate("/posts")}>
             <ArticleIcon fontSize="small" />
             <Typography variant="body1">Посты</Typography>
           </Box>

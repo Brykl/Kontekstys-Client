@@ -1,3 +1,13 @@
 body {
   margin: 0;
 }
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Скрывает скроллбар в Firefox */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
