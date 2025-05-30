@@ -14,8 +14,6 @@ import paperImage from "../../../assets/homePage/paper.avif";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
 import { getPosBName } from "../../../controllers/allProfPost";
 import AppBarPrivate from "../components/AppBar";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import PostCard from "../components/PostCard";
 
 interface Post {
@@ -49,13 +47,21 @@ const ProfilePage: React.FC = () => {
       try {
         const response = await getPosBName(username);
 
+        let rawPosts = [];
+
         if (response && Array.isArray(response.posts)) {
-          setPosts(response.posts);
+          rawPosts = response.posts;
         } else if (Array.isArray(response)) {
-          setPosts(response);
-        } else {
-          setPosts([]);
+          rawPosts = response;
         }
+
+        // Добавим author_name вручную
+        const postsWithAuthor = rawPosts.map((post) => ({
+          ...post,
+          author_name: username,
+        }));
+
+        setPosts(postsWithAuthor);
       } catch (err) {
         setError("Не удалось загрузить посты");
       } finally {

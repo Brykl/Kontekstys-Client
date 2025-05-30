@@ -8,6 +8,7 @@ import paperImage from "../../../assets/homePage/paper.avif";
 interface Post {
   id: number;
   title: string;
+  author_name: string;
   description: string;
   created_at: string;
   was_edited: boolean;
@@ -120,6 +121,9 @@ const PostCard: React.FC<Props> = ({ post }) => {
       }}
     >
       <Typography variant="h6">{post.title}</Typography>
+      <Typography variant="subtitle2" color="text.secondary">
+        Автор: {post.author_name}
+      </Typography>
       <Typography variant="body2" color="text.secondary">
         {new Date(post.created_at).toLocaleString()}
       </Typography>

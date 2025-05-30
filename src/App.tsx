@@ -6,6 +6,7 @@ import LoginPage from "./pages/authorization/LoginPage";
 import RegistrationPage from "./pages/authorization/RegistrationPage";
 import PrivateRoute from "./midleware/PrivateRoute";
 import ProfilePage from "./pages/private/profile/ProfilePage";
+import AllPostsPage from "./pages/private/Posts/PublicPostsPage";
 
 const App: React.FC = () => {
   return (
@@ -20,6 +21,14 @@ const App: React.FC = () => {
           element={
             <PrivateRoute>
               <ProfilePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/posts"
+          element={
+            <PrivateRoute>
+              <AllPostsPage />
             </PrivateRoute>
           }
         />

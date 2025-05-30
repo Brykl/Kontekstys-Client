@@ -38,7 +38,7 @@ export default function AppBarPrivate(): JSX.Element {
       elevation={3}
       sx={{
         backgroundImage: `url(${paperImage})`,
-        backgroundSize: "cover",
+        backgroundSize: "cover contented",
         backgroundPosition: "center",
         color: "#1e1e1f",
         backdropFilter: "blur(3px)",
