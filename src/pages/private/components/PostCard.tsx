@@ -14,6 +14,7 @@ interface Post {
   was_edited: boolean;
   like_count: number;
   dislike_count: number;
+  img: string;
   viewer_reaction: "like" | "dislike" | null;
 }
 
@@ -23,6 +24,7 @@ interface Props {
 
 const API_CREATE = "http://172.30.253.7:3891/api/reactions/create";
 const API_UPDATE = "http://172.30.253.7:3891/api/reactions/update";
+const BASE_URL = "http://172.30.253.7:3891";
 
 const PostCard: React.FC<Props> = ({ post }) => {
   const [likeCount, setLikeCount] = useState<number>(post.like_count);
@@ -47,7 +49,7 @@ const PostCard: React.FC<Props> = ({ post }) => {
           { postId: post.id, reactionType: "none" },
           config
         );
-        setLikeCount((prev) => Number(prev) - 1);
+        setLikeCount((prev) => prev - 1);
         setReaction(null);
       } else if (reaction === "dislike") {
         await axios.put(
@@ -55,8 +57,8 @@ const PostCard: React.FC<Props> = ({ post }) => {
           { postId: post.id, reactionType: "like" },
           config
         );
-        setLikeCount((prev) => Number(prev) + 1);
-        setDislikeCount((prev) => Number(prev) - 1);
+        setLikeCount((prev) => prev + 1);
+        setDislikeCount((prev) => prev - 1);
         setReaction("like");
       } else {
         await axios.post(
@@ -64,7 +66,7 @@ const PostCard: React.FC<Props> = ({ post }) => {
           { postId: post.id, reactionType: "like" },
           config
         );
-        setLikeCount((prev) => Number(prev) + 1);
+        setLikeCount((prev) => prev + 1);
         setReaction("like");
       }
     } catch (err) {
@@ -80,7 +82,7 @@ const PostCard: React.FC<Props> = ({ post }) => {
           { postId: post.id, reactionType: "none" },
           config
         );
-        setDislikeCount((prev) => Number(prev) - 1);
+        setDislikeCount((prev) => prev - 1);
         setReaction(null);
       } else if (reaction === "like") {
         await axios.put(
@@ -88,8 +90,8 @@ const PostCard: React.FC<Props> = ({ post }) => {
           { postId: post.id, reactionType: "dislike" },
           config
         );
-        setDislikeCount((prev) => Number(prev) + 1);
-        setLikeCount((prev) => Number(prev) - 1);
+        setDislikeCount((prev) => prev + 1);
+        setLikeCount((prev) => prev - 1);
         setReaction("dislike");
       } else {
         await axios.post(
@@ -97,7 +99,7 @@ const PostCard: React.FC<Props> = ({ post }) => {
           { postId: post.id, reactionType: "dislike" },
           config
         );
-        setDislikeCount((prev) => Number(prev) + 1);
+        setDislikeCount((prev) => prev + 1);
         setReaction("dislike");
       }
     } catch (err) {
@@ -127,6 +129,25 @@ const PostCard: React.FC<Props> = ({ post }) => {
       <Typography variant="body2" color="text.secondary">
         {new Date(post.created_at).toLocaleString()}
       </Typography>
+
+      {/* Изображение поста */}
+      {post.img && (
+        <Box
+          component="img"
+          src={`${BASE_URL}${post.img}`}
+          alt={post.title}
+          sx={{
+            width: "100%",
+            maxHeight: 300,
+            objectFit: "contain",
+            borderRadius: 2,
+            mt: 2,
+            mb: 1,
+            boxShadow: "0 0 8px rgba(0,0,0,0.1)",
+          }}
+        />
+      )}
+
       <Typography variant="body1" sx={{ mt: 1 }}>
         {post.description}
       </Typography>
@@ -206,7 +227,7 @@ const PostCard: React.FC<Props> = ({ post }) => {
       </Box>
 
       {post.was_edited && (
-        <Typography variant="caption" color="warning.main">
+        <Typography variant="caption" color="warning.main" sx={{ mt: 1 }}>
           (редактировалось)
         </Typography>
       )}

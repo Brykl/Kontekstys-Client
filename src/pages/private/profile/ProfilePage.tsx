@@ -1,20 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  AppBar,
-  Toolbar,
   Typography,
-  Button,
   Paper,
   Box,
   CircularProgress,
+  Button,
 } from "@mui/material";
 import paperImage from "../../../assets/homePage/paper.avif";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
 import { getPosBName } from "../../../controllers/allProfPost";
 import AppBarPrivate from "../components/AppBar";
 import PostCard from "../components/PostCard";
+import UploadImageModal from "../components/UploadImageModal"; // ✅ импорт модалки
 
 interface Post {
   id: number;
@@ -22,6 +21,7 @@ interface Post {
   description: string;
   created_at: string;
   was_edited: boolean;
+  author_name?: string;
 }
 
 const ProfilePage: React.FC = () => {
@@ -31,46 +31,42 @@ const ProfilePage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [openUploadModal, setOpenUploadModal] = useState(false); // ✅ состояние для модалки
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/", { replace: true });
-  };
-
-  useEffect(() => {
+  // Вынесем fetchPosts из useEffect чтобы можно было вызывать и вручную
+  const fetchPosts = useCallback(async () => {
     if (!username) return;
 
-    const fetchPosts = async () => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await getPosBName(username);
+    try {
+      const response = await getPosBName(username);
 
-        let rawPosts = [];
+      let rawPosts = [];
 
-        if (response && Array.isArray(response.posts)) {
-          rawPosts = response.posts;
-        } else if (Array.isArray(response)) {
-          rawPosts = response;
-        }
-
-        // Добавим author_name вручную
-        const postsWithAuthor = rawPosts.map((post) => ({
-          ...post,
-          author_name: username,
-        }));
-
-        setPosts(postsWithAuthor);
-      } catch (err) {
-        setError("Не удалось загрузить посты");
-      } finally {
-        setLoading(false);
+      if (response && Array.isArray(response.posts)) {
+        rawPosts = response.posts;
+      } else if (Array.isArray(response)) {
+        rawPosts = response;
       }
-    };
 
-    fetchPosts();
+      const postsWithAuthor = rawPosts.map((post) => ({
+        ...post,
+        author_name: username,
+      }));
+
+      setPosts(postsWithAuthor);
+    } catch (err) {
+      setError("Не удалось загрузить посты");
+    } finally {
+      setLoading(false);
+    }
   }, [username]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   return (
     <Box
@@ -80,40 +76,12 @@ const ProfilePage: React.FC = () => {
         flexDirection: "column",
       }}
     >
-      {/* AppBar */}
-      {/* <AppBar
-        position="static"
-        elevation={3}
-        sx={{
-          backgroundImage: `url(${paperImage})`,
-          backgroundSize: "cover contented",
-          backgroundPosition: "center",
-          color: "#1e1e1f",
-          backdropFilter: "blur(3px)",
-        }}
-      >
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: "bold" }}>
-            Контекстус
-          </Typography>
-          <Button
-            color="inherit"
-            variant="outlined"
-            onClick={handleLogout}
-            sx={{ borderColor: "#1e1e1f", color: "#1e1e1f" }}
-          >
-            Выйти
-          </Button>
-        </Toolbar>
-      </AppBar> */}
-
       <AppBarPrivate />
-      {/* Контейнер с фоном под AppBar */}
 
       <Box
         sx={{
           marginTop: 0,
-          flex: 1, // занимает оставшееся пространство
+          flex: 1,
           height: "100vh",
           backgroundImage: `url(${bagr1})`,
           backgroundSize: "cover",
@@ -127,12 +95,7 @@ const ProfilePage: React.FC = () => {
         }}
       >
         {/* Секция постов */}
-        <Box
-          sx={{
-            maxWidth: "600px",
-            width: "100%",
-          }}
-        >
+        <Box sx={{ maxWidth: "600px", width: "100%" }}>
           <Typography
             variant="h5"
             gutterBottom
@@ -164,33 +127,19 @@ const ProfilePage: React.FC = () => {
               gap: 2,
               mt: 2,
               maxHeight: "70vh",
-              overflowY: "auto", // вертикальный скролл, если не помещается
-              scrollbarWidth: "none", // Firefox
+              overflowY: "auto",
+              scrollbarWidth: "none",
               "&::-webkit-scrollbar": {
-                display: "none", // Chrome, Safari, Edge
+                display: "none",
               },
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                mt: 2,
-                maxHeight: "70vh",
-                overflowY: "auto",
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": {
-                  display: "none",
-                },
-              }}
-            >
-              {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </Box>
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
           </Box>
         </Box>
+
         {/* Карточка профиля */}
         <Paper
           elevation={6}
@@ -218,8 +167,23 @@ const ProfilePage: React.FC = () => {
           <Typography variant="h6" sx={{ mb: 2 }}>
             Имя пользователя: <strong>{username}</strong>
           </Typography>
+
+          <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Button variant="outlined" onClick={() => setOpenUploadModal(true)}>
+              Создать новый пост
+            </Button>
+          </Box>
         </Paper>
       </Box>
+
+      <UploadImageModal
+        open={openUploadModal}
+        onClose={() => setOpenUploadModal(false)}
+        onPostCreated={() => {
+          setOpenUploadModal(false);
+          fetchPosts();
+        }}
+      />
     </Box>
   );
 };

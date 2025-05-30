@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Grid,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import paperImage from "../../../assets/homePage/paper.avif";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
 import { getAllPosts } from "../../../controllers/getAllPosts";
@@ -13,12 +20,18 @@ interface Post {
   description: string;
   created_at: string;
   was_edited: boolean;
+  like_count?: number;
+  dislike_count?: number;
+  viewer_reaction?: "like" | "dislike" | null;
 }
 
 const AllPostsPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -27,7 +40,15 @@ const AllPostsPage: React.FC = () => {
 
       try {
         const response = await getAllPosts();
-        setPosts(response);
+
+        const postsWithDefaults = response.map((post: Post) => ({
+          ...post,
+          like_count: post.like_count ?? 0,
+          dislike_count: post.dislike_count ?? 0,
+          viewer_reaction: post.viewer_reaction ?? null,
+        }));
+
+        setPosts(postsWithDefaults);
       } catch (err) {
         setError("Не удалось загрузить посты");
       } finally {
@@ -50,13 +71,10 @@ const AllPostsPage: React.FC = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           p: 3,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "start",
           overflowY: "auto",
         }}
       >
-        <Box sx={{ maxWidth: "600px", width: "100%" }}>
+        <Box sx={{ maxWidth: "1200px", mx: "auto", width: "100%" }}>
           <Typography
             variant="h5"
             gutterBottom
@@ -89,13 +107,12 @@ const AllPostsPage: React.FC = () => {
             </Typography>
           )}
 
-          <Box
+          <Grid
+            container
+            spacing={2}
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
               mt: 2,
-              maxHeight: "70vh",
+              maxHeight: "75vh",
               overflowY: "auto",
               scrollbarWidth: "none",
               "&::-webkit-scrollbar": {
@@ -103,10 +120,12 @@ const AllPostsPage: React.FC = () => {
               },
             }}
           >
-            {posts.map((item) => (
-              <PostCard key={item.id} post={item} />
+            {posts.map((post) => (
+              <Grid item xs={12} sm={6} md={4} key={post.id}>
+                <PostCard post={post} />
+              </Grid>
             ))}
-          </Box>
+          </Grid>
         </Box>
       </Box>
     </Box>
