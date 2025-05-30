@@ -7,13 +7,19 @@ import {
   Box,
   CircularProgress,
   Button,
+  Avatar,
 } from "@mui/material";
 import paperImage from "../../../assets/homePage/paper.avif";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
 import { getPosBName } from "../../../controllers/allProfPost";
 import AppBarPrivate from "../components/AppBar";
 import PostCard from "../components/PostCard";
-import UploadImageModal from "../components/UploadImageModal"; // ✅ импорт модалки
+import UploadImageModal from "../components/UploadImageModal";
+import UploadIconModal from "../components/UploadIconModal";
+import { useUser } from "../../../contexts/AuthContext";
+import defaultAvatar from "../../../assets/private/avatar.svg";
+import EditIcon from "@mui/icons-material/Edit";
+const dataBaseServerUrl = import.meta.env.VITE_SERVER_URL;
 
 interface Post {
   id: number;
@@ -26,38 +32,31 @@ interface Post {
 
 const ProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const { user } = useUser();
   const navigate = useNavigate();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [openUploadModal, setOpenUploadModal] = useState(false); // ✅ состояние для модалки
+  const [openUploadModal, setOpenUploadModal] = useState(false);
+  const [openIconModal, setOpenIconModal] = useState(false);
+  const [iconUrl, setIconUrl] = useState(user?.icon_url || "");
 
-  // Вынесем fetchPosts из useEffect чтобы можно было вызывать и вручную
   const fetchPosts = useCallback(async () => {
     if (!username) return;
-
     setLoading(true);
     setError(null);
-
     try {
       const response = await getPosBName(username);
-
-      let rawPosts = [];
-
-      if (response && Array.isArray(response.posts)) {
-        rawPosts = response.posts;
-      } else if (Array.isArray(response)) {
-        rawPosts = response;
-      }
-
+      let rawPosts: any[] = [];
+      if (response && Array.isArray(response.posts)) rawPosts = response.posts;
+      else if (Array.isArray(response)) rawPosts = response;
       const postsWithAuthor = rawPosts.map((post) => ({
         ...post,
         author_name: username,
       }));
-
       setPosts(postsWithAuthor);
-    } catch (err) {
+    } catch {
       setError("Не удалось загрузить посты");
     } finally {
       setLoading(false);
@@ -68,16 +67,11 @@ const ProfilePage: React.FC = () => {
     fetchPosts();
   }, [fetchPosts]);
 
-  return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <AppBarPrivate />
+  const token = localStorage.getItem("token") || "";
 
+  return (
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <AppBarPrivate />
       <Box
         sx={{
           marginTop: 0,
@@ -94,7 +88,6 @@ const ProfilePage: React.FC = () => {
           overflowY: "auto",
         }}
       >
-        {/* Секция постов */}
         <Box sx={{ maxWidth: "600px", width: "100%" }}>
           <Typography
             variant="h5"
@@ -108,18 +101,15 @@ const ProfilePage: React.FC = () => {
           >
             Посты пользователя
           </Typography>
-
           {loading && <CircularProgress />}
           {error && (
             <Typography color="error" sx={{ mt: 2 }}>
               {error}
             </Typography>
           )}
-
           {!loading && posts.length === 0 && (
             <Typography sx={{ mt: 2 }}>Нет доступных постов.</Typography>
           )}
-
           <Box
             sx={{
               display: "flex",
@@ -129,9 +119,7 @@ const ProfilePage: React.FC = () => {
               maxHeight: "70vh",
               overflowY: "auto",
               scrollbarWidth: "none",
-              "&::-webkit-scrollbar": {
-                display: "none",
-              },
+              "&::-webkit-scrollbar": { display: "none" },
             }}
           >
             {posts.map((post) => (
@@ -139,8 +127,6 @@ const ProfilePage: React.FC = () => {
             ))}
           </Box>
         </Box>
-
-        {/* Карточка профиля */}
         <Paper
           elevation={6}
           sx={{
@@ -163,19 +149,67 @@ const ProfilePage: React.FC = () => {
           >
             Профиль пользователя
           </Typography>
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+            <Box
+              sx={{
+                position: "relative",
+                width: 200,
+                height: 200,
+                borderRadius: 1,
+                overflow: "hidden",
+                cursor: user?.user_name === username ? "pointer" : "default",
+                "&:hover .overlay": {
+                  opacity: user?.user_name === username ? 1 : 0,
+                },
+              }}
+              onClick={() => {
+                if (user?.user_name === username) {
+                  setOpenIconModal(true);
+                }
+              }}
+            >
+              <Avatar
+                src={iconUrl ? `${dataBaseServerUrl}${iconUrl}` : defaultAvatar}
+                alt={username}
+                sx={{ width: "100%", height: "100%", borderRadius: 1 }}
+              />
 
-          <Typography variant="h6" sx={{ mb: 2 }}>
+              <Box
+                className="overlay"
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  bgcolor: "rgba(0,0,0,0.5)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: 0,
+                  transition: "opacity 0.3s",
+                  color: "white",
+                }}
+              >
+                <EditIcon fontSize="large" />
+              </Box>
+            </Box>
+          </Box>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: "center" }}>
             Имя пользователя: <strong>{username}</strong>
           </Typography>
-
-          <Box sx={{ textAlign: "center", mt: 2 }}>
-            <Button variant="outlined" onClick={() => setOpenUploadModal(true)}>
-              Создать новый пост
-            </Button>
-          </Box>
+          {user?.user_name === username && (
+            <Box sx={{ textAlign: "center", mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => setOpenUploadModal(true)}
+              >
+                Создать новый пост
+              </Button>
+            </Box>
+          )}
         </Paper>
       </Box>
-
       <UploadImageModal
         open={openUploadModal}
         onClose={() => setOpenUploadModal(false)}
@@ -183,6 +217,13 @@ const ProfilePage: React.FC = () => {
           setOpenUploadModal(false);
           fetchPosts();
         }}
+      />
+      <UploadIconModal
+        open={openIconModal}
+        onClose={() => setOpenIconModal(false)}
+        onUploaded={(url) => setIconUrl(url)}
+        currentIconUrl={iconUrl}
+        token={token}
       />
     </Box>
   );
