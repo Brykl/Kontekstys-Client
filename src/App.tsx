@@ -7,33 +7,36 @@ import RegistrationPage from "./pages/authorization/RegistrationPage";
 import PrivateRoute from "./midleware/PrivateRoute";
 import ProfilePage from "./pages/private/profile/ProfilePage";
 import AllPostsPage from "./pages/private/Posts/PublicPostsPage";
+import { UserProvider } from "./contexts/AuthContext";
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/registration" element={<RegistrationPage />} />
-        <Route
-          path="/profile/:username"
-          element={
-            <PrivateRoute>
-              <ProfilePage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/posts"
-          element={
-            <PrivateRoute>
-              <AllPostsPage />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </Router>
+    <UserProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/registration" element={<RegistrationPage />} />
+          <Route
+            path="/profile/:username"
+            element={
+              <PrivateRoute>
+                <ProfilePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/posts"
+            element={
+              <PrivateRoute>
+                <AllPostsPage />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 };
 

@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Paper, Typography, Box } from "@mui/material";
+import { Paper, Typography, Box, IconButton } from "@mui/material";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import paperImage from "../../../assets/homePage/paper.avif";
+import { useUser } from "../../../contexts/AuthContext";
 
 interface Post {
   id: number;
@@ -12,22 +14,23 @@ interface Post {
   description: string;
   created_at: string;
   was_edited: boolean;
-  like_count: string; // по-умолчанию из БД приходит string
-  dislike_count: string; // тоже string
+  like_count: string;
+  dislike_count: string;
   img: string;
   viewer_reaction: "like" | "dislike" | null;
 }
 
 interface Props {
   post: Post;
+  onDelete?: (postId: number) => void; // callback после удаления
 }
 
 const API_CREATE = "http://172.30.253.7:3891/api/reactions/create";
 const API_UPDATE = "http://172.30.253.7:3891/api/reactions/update";
+const API_DELETE = "http://172.30.253.7:3891/api/posts";
 const BASE_URL = "http://172.30.253.7:3891";
 
-const PostCard: React.FC<Props> = ({ post }) => {
-  // Приводим к числу сразу при инициализации
+const PostCard: React.FC<Props> = ({ post, onDelete }) => {
   const [likeCount, setLikeCount] = useState<number>(Number(post.like_count));
   const [dislikeCount, setDislikeCount] = useState<number>(
     Number(post.dislike_count)
@@ -36,6 +39,7 @@ const PostCard: React.FC<Props> = ({ post }) => {
     post.viewer_reaction ?? null
   );
 
+  const { user } = useUser();
   const token = localStorage.getItem("token");
   const config = { headers: { Authorization: token ? `Bearer ${token}` : "" } };
 
@@ -105,6 +109,15 @@ const PostCard: React.FC<Props> = ({ post }) => {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`${API_DELETE}/${post.id}`, config);
+      if (onDelete) onDelete(post.id);
+    } catch (err) {
+      console.error("Ошибка при удалении поста:", err);
+    }
+  };
+
   const isLiked = reaction === "like";
   const isDisliked = reaction === "dislike";
 
@@ -113,6 +126,7 @@ const PostCard: React.FC<Props> = ({ post }) => {
       elevation={3}
       sx={{
         p: 2,
+        position: "relative",
         backgroundImage: `url(${paperImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -120,6 +134,22 @@ const PostCard: React.FC<Props> = ({ post }) => {
         backdropFilter: "blur(3px)",
       }}
     >
+      {/* Кнопка удаления */}
+      {/* TODO: добавить проверку user.username === post.author_name */}
+      {user?.user_name == post.author_name && (
+        <IconButton
+          onClick={handleDelete}
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            color: "error.main",
+          }}
+        >
+          <DeleteForeverIcon />
+        </IconButton>
+      )}
+
       <Typography variant="h6">{post.title}</Typography>
       <Typography variant="subtitle2" color="text.secondary">
         Автор: {post.author_name}
@@ -128,7 +158,6 @@ const PostCard: React.FC<Props> = ({ post }) => {
         {new Date(post.created_at).toLocaleString()}
       </Typography>
 
-      {/* Изображение */}
       {post.img && (
         <Box
           component="img"

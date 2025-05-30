@@ -7,8 +7,12 @@ import GroupIcon from "@mui/icons-material/Group";
 import ChatIcon from "@mui/icons-material/Chat";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ArticleIcon from "@mui/icons-material/Article";
+import { useUser } from "../../../contexts/AuthContext";
 
 export default function AppBarPrivate(): JSX.Element {
+  const { user } = useUser();
+  console.log(user.user_name);
+
   const navigate = useNavigate();
 
   const handleLogout = (): void => {
@@ -58,7 +62,10 @@ export default function AppBarPrivate(): JSX.Element {
             <ArticleIcon fontSize="small" />
             <Typography variant="body1">Посты</Typography>
           </Box>
-          <Box sx={navItemStyle}>
+          <Box
+            sx={navItemStyle}
+            onClick={() => navigate(`/profile/${user.user_name}`)}
+          >
             <Person2Icon fontSize="small" />
             <Typography variant="body1">Профиль</Typography>
           </Box>

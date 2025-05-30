@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { CircularProgress, Box } from "@mui/material";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { useUser } from "../contexts/AuthContext"; // импортируем хук контекста
+
 const serverAddress = import.meta.env.VITE_SERVER_URL;
 
 interface PrivateRouteProps {
@@ -11,6 +12,7 @@ interface PrivateRouteProps {
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const { setUser } = useUser();
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -32,6 +34,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
         );
 
         if (response.status === 200) {
+          setUser(response.data.user); // сохраняем пользователя в контекст
           setIsAuthorized(true);
         } else {
           setIsAuthorized(false);
@@ -43,9 +46,8 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
     };
 
     verifyToken();
-  }, []);
+  }, [setUser]);
 
-  // Пока проверяется токен — показываем индикатор загрузки
   if (isAuthorized === null) {
     return (
       <Box
@@ -61,7 +63,6 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
     );
   }
 
-  // Если авторизован — отрисовываем защищённый контент
   return isAuthorized ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
