@@ -15,11 +15,11 @@ import { getPosBName } from "../../../controllers/allProfPost";
 import AppBarPrivate from "../components/AppBar";
 import PostCard from "../components/PostCard";
 import UploadImageModal from "../components/UploadImageModal";
-import UploadIconModal from "../components/UploadIconModal";
+import UploadIconModal from "../components/uploadIconModal";
 import { useUser } from "../../../contexts/AuthContext";
 import defaultAvatar from "../../../assets/private/avatar.svg";
 import EditIcon from "@mui/icons-material/Edit";
-const dataBaseServerUrl = import.meta.env.VITE_SERVER_URL;
+import useUserIcon from "../../../controllers/getIcon"; // путь адаптируй под свой проект
 
 interface Post {
   id: number;
@@ -40,7 +40,9 @@ const ProfilePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [openUploadModal, setOpenUploadModal] = useState(false);
   const [openIconModal, setOpenIconModal] = useState(false);
-  const [iconUrl, setIconUrl] = useState(user?.icon_url || "");
+
+  const iconUrlFromServer = useUserIcon();
+  const token = localStorage.getItem("token") || "";
 
   const fetchPosts = useCallback(async () => {
     if (!username) return;
@@ -66,8 +68,6 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
-
-  const token = localStorage.getItem("token") || "";
 
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -169,11 +169,10 @@ const ProfilePage: React.FC = () => {
               }}
             >
               <Avatar
-                src={iconUrl ? `${dataBaseServerUrl}${iconUrl}` : defaultAvatar}
+                src={iconUrlFromServer || defaultAvatar}
                 alt={username}
                 sx={{ width: "100%", height: "100%", borderRadius: 1 }}
               />
-
               <Box
                 className="overlay"
                 sx={{
@@ -221,8 +220,8 @@ const ProfilePage: React.FC = () => {
       <UploadIconModal
         open={openIconModal}
         onClose={() => setOpenIconModal(false)}
-        onUploaded={(url) => setIconUrl(url)}
-        currentIconUrl={iconUrl}
+        onUploaded={() => setOpenIconModal(false)} // не обновляем вручную, хук сам обновит
+        currentIconUrl={iconUrlFromServer}
         token={token}
       />
     </Box>
