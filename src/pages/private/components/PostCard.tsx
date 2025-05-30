@@ -7,6 +7,8 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import paperImage from "../../../assets/homePage/paper.avif";
 import { useUser } from "../../../contexts/AuthContext";
 
+const dataBaseServerUrl = import.meta.env.VITE_SERVER_URL;
+
 interface Post {
   id: number;
   title: string;
@@ -25,19 +27,15 @@ interface Props {
   onDelete?: (postId: number) => void; // callback после удаления
 }
 
-const API_CREATE = "http://172.30.253.7:3891/api/reactions/create";
-const API_UPDATE = "http://172.30.253.7:3891/api/reactions/update";
-const API_DELETE = "http://172.30.253.7:3891/api/posts";
-const BASE_URL = "http://172.30.253.7:3891";
+const API_CREATE = `${dataBaseServerUrl}/api/reactions/create`;
+const API_UPDATE = `${dataBaseServerUrl}/api/reactions/update`;
+const API_DELETE = `${dataBaseServerUrl}/api/posts`;
+const BASE_URL = dataBaseServerUrl;
 
 const PostCard: React.FC<Props> = ({ post, onDelete }) => {
   const [likeCount, setLikeCount] = useState<number>(Number(post.like_count));
-  const [dislikeCount, setDislikeCount] = useState<number>(
-    Number(post.dislike_count)
-  );
-  const [reaction, setReaction] = useState<"like" | "dislike" | null>(
-    post.viewer_reaction ?? null
-  );
+  const [dislikeCount, setDislikeCount] = useState<number>(Number(post.dislike_count));
+  const [reaction, setReaction] = useState<"like" | "dislike" | null>(post.viewer_reaction ?? null);
 
   const { user } = useUser();
   const token = localStorage.getItem("token");
@@ -46,28 +44,16 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
   const handleLike = async () => {
     try {
       if (reaction === "like") {
-        await axios.put(
-          API_UPDATE,
-          { postId: post.id, reactionType: "none" },
-          config
-        );
+        await axios.put(API_UPDATE, { postId: post.id, reactionType: "none" }, config);
         setLikeCount((prev) => Math.max(0, prev - 1));
         setReaction(null);
       } else if (reaction === "dislike") {
-        await axios.put(
-          API_UPDATE,
-          { postId: post.id, reactionType: "like" },
-          config
-        );
+        await axios.put(API_UPDATE, { postId: post.id, reactionType: "like" }, config);
         setLikeCount((prev) => prev + 1);
         setDislikeCount((prev) => Math.max(0, prev - 1));
         setReaction("like");
       } else {
-        await axios.post(
-          API_CREATE,
-          { postId: post.id, reactionType: "like" },
-          config
-        );
+        await axios.post(API_CREATE, { postId: post.id, reactionType: "like" }, config);
         setLikeCount((prev) => prev + 1);
         setReaction("like");
       }
@@ -79,28 +65,16 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
   const handleDislike = async () => {
     try {
       if (reaction === "dislike") {
-        await axios.put(
-          API_UPDATE,
-          { postId: post.id, reactionType: "none" },
-          config
-        );
+        await axios.put(API_UPDATE, { postId: post.id, reactionType: "none" }, config);
         setDislikeCount((prev) => Math.max(0, prev - 1));
         setReaction(null);
       } else if (reaction === "like") {
-        await axios.put(
-          API_UPDATE,
-          { postId: post.id, reactionType: "dislike" },
-          config
-        );
+        await axios.put(API_UPDATE, { postId: post.id, reactionType: "dislike" }, config);
         setDislikeCount((prev) => prev + 1);
         setLikeCount((prev) => Math.max(0, prev - 1));
         setReaction("dislike");
       } else {
-        await axios.post(
-          API_CREATE,
-          { postId: post.id, reactionType: "dislike" },
-          config
-        );
+        await axios.post(API_CREATE, { postId: post.id, reactionType: "dislike" }, config);
         setDislikeCount((prev) => prev + 1);
         setReaction("dislike");
       }
@@ -110,11 +84,15 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
   };
 
   const handleDelete = async () => {
+    const confirmDelete = window.confirm("Вы точно хотите удалить этот пост?");
+    if (!confirmDelete) return;
+
     try {
       await axios.delete(`${API_DELETE}/${post.id}`, config);
-      if (onDelete) onDelete(post.id);
+      if (onDelete) onDelete(post.id); // вызов колбэка
     } catch (err) {
       console.error("Ошибка при удалении поста:", err);
+      alert("Не удалось удалить пост.");
     }
   };
 
@@ -134,9 +112,7 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
         backdropFilter: "blur(3px)",
       }}
     >
-      {/* Кнопка удаления */}
-      {/* TODO: добавить проверку user.username === post.author_name */}
-      {user?.user_name == post.author_name && (
+      {user?.user_name === post.author_name && (
         <IconButton
           onClick={handleDelete}
           sx={{
@@ -180,7 +156,6 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
       </Typography>
 
       <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
-        {/* Лайк */}
         <Box
           onClick={handleLike}
           sx={{
@@ -211,7 +186,6 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
           <Typography variant="caption">{likeCount}</Typography>
         </Box>
 
-        {/* Дизлайк */}
         <Box
           onClick={handleDislike}
           sx={{

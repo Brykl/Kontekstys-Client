@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -10,7 +9,7 @@ import {
   Avatar,
 } from "@mui/material";
 import paperImage from "../../../assets/homePage/paper.avif";
-import bagr1 from "../../../assets/homePage/treygol1.jpg";
+import backgroundImg from "../../../assets/homePage/treygol1.jpg";
 import { getPosBName } from "../../../controllers/allProfPost";
 import AppBarPrivate from "../components/AppBar";
 import PostCard from "../components/PostCard";
@@ -19,7 +18,7 @@ import UploadIconModal from "../components/uploadIconModal";
 import { useUser } from "../../../contexts/AuthContext";
 import defaultAvatar from "../../../assets/private/avatar.svg";
 import EditIcon from "@mui/icons-material/Edit";
-import useUserIcon from "../../../controllers/getIcon"; // путь адаптируй под свой проект
+import useUserIcon from "../../../controllers/getIcon";
 
 interface Post {
   id: number;
@@ -28,6 +27,10 @@ interface Post {
   created_at: string;
   was_edited: boolean;
   author_name?: string;
+  like_count: string;
+  dislike_count: string;
+  viewer_reaction: "like" | "dislike" | null;
+  img: string;
 }
 
 const ProfilePage: React.FC = () => {
@@ -42,7 +45,6 @@ const ProfilePage: React.FC = () => {
   const [openIconModal, setOpenIconModal] = useState(false);
 
   const iconUrlFromServer = useUserIcon();
-  const token = localStorage.getItem("token") || "";
 
   const fetchPosts = useCallback(async () => {
     if (!username) return;
@@ -69,15 +71,17 @@ const ProfilePage: React.FC = () => {
     fetchPosts();
   }, [fetchPosts]);
 
+  const handlePostDeleted = (postId: number) => {
+    setPosts((prev) => prev.filter((post) => post.id !== postId));
+  };
+
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <AppBarPrivate />
       <Box
         sx={{
-          marginTop: 0,
           flex: 1,
-          height: "100vh",
-          backgroundImage: `url(${bagr1})`,
+          backgroundImage: `url(${backgroundImg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           p: 3,
@@ -123,10 +127,12 @@ const ProfilePage: React.FC = () => {
             }}
           >
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.id} post={post} onDelete={handlePostDeleted} />
             ))}
           </Box>
         </Box>
+
+        {/* Боковая панель профиля */}
         <Paper
           elevation={6}
           sx={{
@@ -209,6 +215,8 @@ const ProfilePage: React.FC = () => {
           )}
         </Paper>
       </Box>
+
+      {/* Модальные окна */}
       <UploadImageModal
         open={openUploadModal}
         onClose={() => setOpenUploadModal(false)}
@@ -217,12 +225,11 @@ const ProfilePage: React.FC = () => {
           fetchPosts();
         }}
       />
+
       <UploadIconModal
         open={openIconModal}
         onClose={() => setOpenIconModal(false)}
-        onUploaded={() => setOpenIconModal(false)} // не обновляем вручную, хук сам обновит
-        currentIconUrl={iconUrlFromServer}
-        token={token}
+        onUploaded={() => setOpenIconModal(false)}
       />
     </Box>
   );

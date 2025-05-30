@@ -10,7 +10,7 @@ import {
 import paperImage from "../../../assets/homePage/paper.avif";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
 import { getAllPosts } from "../../../controllers/getAllPosts";
-import AppBarPrivate from "../components/AppBar"; // предполагаем, что оно принимает prop position
+import AppBarPrivate from "../components/AppBar";
 import PostCard from "../components/PostCard";
 
 interface Post {
@@ -33,27 +33,34 @@ const AllPostsPage: React.FC = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
+  // Загрузка постов при монтировании
   useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await getAllPosts();
-        const postsWithDefaults = response.map((post: Post) => ({
-          ...post,
-          like_count: post.like_count ?? 0,
-          dislike_count: post.dislike_count ?? 0,
-          viewer_reaction: post.viewer_reaction ?? null,
-        }));
-        setPosts(postsWithDefaults);
-      } catch {
-        setError("Не удалось загрузить посты");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchPosts();
   }, []);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getAllPosts();
+      const postsWithDefaults = response.map((post: Post) => ({
+        ...post,
+        like_count: post.like_count ?? 0,
+        dislike_count: post.dislike_count ?? 0,
+        viewer_reaction: post.viewer_reaction ?? null,
+      }));
+      setPosts(postsWithDefaults);
+    } catch {
+      setError("Не удалось загрузить посты");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Обработчик удаления поста
+  const handleDeletePost = (postId: number) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+  };
 
   return (
     <Box
@@ -62,15 +69,12 @@ const AllPostsPage: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         flex: 1,
-        /* прячем полосу прокрутки */
         scrollbarWidth: "none",
         "&::-webkit-scrollbar": { display: "none" },
       }}
     >
-      {/* Сделали AppBar статичным */}
       <AppBarPrivate position="static" />
 
-      {/* Контент */}
       <Box
         sx={{
           flex: 1,
@@ -116,13 +120,11 @@ const AllPostsPage: React.FC = () => {
           </Typography>
         )}
 
-        {/* Скрытый скролл, но возможность скроллить */}
         <Box
           sx={{
             flex: 1,
             mt: 2,
             overflowY: "auto",
-            /* прячем полосу прокрутки */
             scrollbarWidth: "none",
             "&::-webkit-scrollbar": { display: "none" },
           }}
@@ -130,7 +132,7 @@ const AllPostsPage: React.FC = () => {
           <Grid container spacing={2} sx={{ height: "100%" }}>
             {posts.map((post) => (
               <Grid item xs={12} sm={6} md={4} key={post.id}>
-                <PostCard post={post} />
+                <PostCard post={post} onDelete={handleDeletePost} />
               </Grid>
             ))}
           </Grid>

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import paperImage from "../../assets/homePage/paper.avif";
 import bagr1 from "../../assets/homePage/treygol1.jpg";
+const dataBaseServerUrl = import.meta.env.VITE_SERVER_URL;
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -17,7 +18,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://172.30.253.7:3891/api/auth/login",
+        `${dataBaseServerUrl}/api/auth/login`,
         {
           username,
           password,
