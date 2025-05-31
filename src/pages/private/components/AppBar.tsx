@@ -60,10 +60,16 @@ export default function AppBarPrivate(): JSX.Element {
             <ArticleIcon fontSize="small" />
             <Typography variant="body1">Посты</Typography>
           </Box>
-          <Box sx={navItemStyle} onClick={() => navigate(`/profile/${user.user_name}`)}>
-            <Person2Icon fontSize="small" />
-            <Typography variant="body1">Профиль</Typography>
-          </Box>
+          <Box
+  sx={navItemStyle}
+  onClick={() => {
+    window.location.href = `/profile/${user.user_name}`;
+  }}
+>
+  <Person2Icon fontSize="small" />
+  <Typography variant="body1">Профиль</Typography>
+</Box>
+
           <Box sx={navItemStyle} onClick={() => navigate("/friends")}>
             <GroupIcon fontSize="small" />
             <Typography variant="body1">Друзья</Typography>

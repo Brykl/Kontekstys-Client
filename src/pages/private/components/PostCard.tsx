@@ -128,8 +128,11 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
 
       <Typography variant="h6">{post.title}</Typography>
       <Typography variant="subtitle2" color="text.secondary">
-        Автор: {post.author_name}
-      </Typography>
+  Автор:{" "}
+  <Box component="span" sx={{ color: "blue", display: "inline" }}>
+    {post.author_name}
+  </Box>
+</Typography>
       <Typography variant="body2" color="text.secondary">
         {new Date(post.created_at).toLocaleString()}
       </Typography>
