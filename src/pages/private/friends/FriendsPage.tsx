@@ -17,9 +17,14 @@ import {
 import AppBar from '../components/AppBar';
 import { getUsersByQuery, type UserInfo } from '../../../controllers/getUsersByQuery';
 import { sendFriendRequest } from '../../../controllers/friends/sendRequest';
-import { getFriendRequests, type FriendRequest } from '../../../controllers/friends/getFriendRequests';
-import DEFAULT_AVATAR from "../../../assets/private/avatar.svg"
+import { getFriendRequests as fetchFriendRequests, type FriendRequest } from '../../../controllers/friends/getFriendRequests';
 import { getAllFriends } from '../../../controllers/friends/getAllFriends';
+import { acceptFriendRequest } from '../../../controllers/friends/acceptFriendRequest';
+import { rejectFriendRequest } from '../../../controllers/friends/rejectFriendRequest';
+import { removeFriend } from '../../../controllers/friends/removeFriend'; // импорт контроллера удаления друга
+import DEFAULT_AVATAR from '../../../assets/private/avatar.svg';
+
+const BASE_URL = 'http://172.30.0.66:3891';
 
 interface Friend {
   id: number;
@@ -28,69 +33,29 @@ interface Friend {
   icon_url?: string | null;
 }
 
-// const DEFAULT_AVATAR = 'https://via.placeholder.com/40?text=User';
-const BASE_URL = 'http://172.30.0.66:3891';
-
 const AddFriendsPage: React.FC = () => {
-  const [tabIndex, setTabIndex] = useState(0);
-  const [friendQuery, setFriendQuery] = useState<string>('');
-  const [searchResults, setSearchResults] = useState<UserInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
-  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [currentTab, setCurrentTab] = useState(0);
 
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(false);
 
-  const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
-    setTabIndex(newValue);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<UserInfo[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
+
+  const handleChangeTab = (_: React.SyntheticEvent, newIndex: number) => {
+    setCurrentTab(newIndex);
   };
 
-  const handleAddFriend = async (userId: number) => {
-    await sendFriendRequest(userId);
-  };
-
-  const handleChangeFriendQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFriendQuery(event.target.value);
-  };
-
-  const handleSearchClick = async () => {
-    if (!friendQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const users = await getUsersByQuery(friendQuery);
-      setSearchResults(users);
-    } catch (error) {
-      setSearchResults([]);
-      console.error('Ошибка при поиске друзей:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Загрузка входящих заявок
   useEffect(() => {
-    if (tabIndex === 2) {
-      setRequestsLoading(true);
-      getFriendRequests()
-        .then((requests) => setFriendRequests(requests))
-        .catch((e) => {
-          console.error('Ошибка при загрузке запросов:', e);
-          setFriendRequests([]);
-        })
-        .finally(() => setRequestsLoading(false));
-    }
-  }, [tabIndex]);
+    if (currentTab !== 0) return;
 
-  // Загрузка списка друзей (заглушка)
-  useEffect(() => {
-  if (tabIndex === 0) {
-    const fetchFriends = async () => {
-      setFriendsLoading(true);
+    const loadFriends = async () => {
+      setIsLoadingFriends(true);
       try {
         const friendsList = await getAllFriends();
         setFriends(friendsList);
@@ -98,57 +63,131 @@ const AddFriendsPage: React.FC = () => {
         console.error('Ошибка при загрузке друзей:', e);
         setFriends([]);
       } finally {
-        setFriendsLoading(false);
+        setIsLoadingFriends(false);
       }
     };
-    fetchFriends();
-  }
-}, [tabIndex]);
 
+    loadFriends();
+  }, [currentTab]);
 
-  const handleAcceptRequest = (id: number) => {
-    console.log(`Принять запрос от пользователя с id=${id}`);
+  useEffect(() => {
+    if (currentTab !== 2) return;
+
+    const loadRequests = async () => {
+      setIsLoadingRequests(true);
+      try {
+        const { received, sent } = await fetchFriendRequests();
+        setIncomingRequests(received);
+        setSentRequests(sent);
+      } catch (e) {
+        console.error('Ошибка при загрузке запросов:', e);
+        setIncomingRequests([]);
+        setSentRequests([]);
+      } finally {
+        setIsLoadingRequests(false);
+      }
+    };
+
+    loadRequests();
+  }, [currentTab]);
+
+  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
-  const handleRejectRequest = (id: number) => {
-    console.log(`Отклонить запрос от пользователя с id=${id}`);
-  };
-
-  const handleRemoveFriend = (id: number) => {
-    console.log(`Удалить пользователя с id=${id} из друзей`);
-  };
-
-  // Хелпер для формирования полного URL аватарки или дефолтного
-  const getAvatarUrl = (iconUrl?: string | null) => {
-    if (iconUrl) {
-      // icon_url может начинаться с "/", тогда склеим с BASE_URL
-      return iconUrl.startsWith('http') ? iconUrl : BASE_URL + iconUrl;
+  const handleClickSearch = async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
     }
-    return DEFAULT_AVATAR;
+
+    setIsSearching(true);
+    try {
+      const users = await getUsersByQuery(searchQuery);
+      setSearchResults(users);
+    } catch (e) {
+      console.error('Ошибка при поиске пользователей:', e);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
+
+  const handleSendRequest = async (userId: number) => {
+    try {
+      await sendFriendRequest(userId);
+      const sentUser = searchResults.find((u) => u.id === userId);
+      if (sentUser) {
+        setSentRequests((prev) => [...prev, sentUser]);
+      }
+      setSearchResults((prev) => prev.filter((u) => u.id !== userId));
+    } catch {
+      // Ошибка уже залогирована в sendFriendRequest
+    }
+  };
+
+  const handleAcceptRequest = async (userId: number) => {
+    try {
+      await acceptFriendRequest(userId);
+      const updatedFriends = await getAllFriends();
+      setFriends(updatedFriends);
+      setIncomingRequests((prev) => prev.filter((u) => u.id !== userId));
+    } catch (e) {
+      console.error(`Ошибка при принятии заявки от пользователя ${userId}:`, e);
+    }
+  };
+
+  const handleRejectRequest = async (userId: number) => {
+    try {
+      await rejectFriendRequest(userId);
+      setIncomingRequests((prev) => prev.filter((u) => u.id !== userId));
+    } catch (e) {
+      console.error(`Ошибка при отклонении заявки от пользователя ${userId}:`, e);
+    }
+  };
+
+  // Новый обработчик удаления друга
+  const handleRemoveFriend = async (userId: number) => {
+    try {
+      await removeFriend(userId);
+      // Обновляем список друзей после удаления
+      const updatedFriends = await getAllFriends();
+      setFriends(updatedFriends);
+    } catch (e) {
+      console.error(`Ошибка при удалении друга с ID ${userId}:`, e);
+    }
+  };
+
+  const getAvatarUrl = (iconUrl?: string | null): string => {
+    if (!iconUrl) return DEFAULT_AVATAR;
+    return iconUrl.startsWith('http') ? iconUrl : BASE_URL + iconUrl;
+  };
+
+  const sentRequestIds = new Set(sentRequests.map((u) => u.id));
+  const filteredSearchResults = searchResults.filter((u) => !sentRequestIds.has(u.id));
 
   return (
     <Box>
       <AppBar />
 
       <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Tabs value={tabIndex} onChange={handleChangeTab} centered>
+        <Tabs value={currentTab} onChange={handleChangeTab} centered>
           <Tab label="Твои друзья" />
           <Tab label="Найти друга" />
           <Tab label="Запросы" />
         </Tabs>
 
         {/* Вкладка: Твои друзья */}
-        {tabIndex === 0 && (
+        {currentTab === 0 && (
           <Box sx={{ mt: 4 }}>
             <Typography variant="h5" gutterBottom>
               Твои друзья
             </Typography>
-            <Paper sx={{ p: 2 }} elevation={2}>
-              {friendsLoading ? (
+            <Paper sx={{ p: 2 }}>
+              {isLoadingFriends ? (
                 <Typography>Загрузка...</Typography>
               ) : friends.length === 0 ? (
-                <Typography variant="body1">У тебя пока нет друзей.</Typography>
+                <Typography>У тебя пока нет друзей.</Typography>
               ) : (
                 <List>
                   {friends.map((friend) => (
@@ -165,12 +204,9 @@ const AddFriendsPage: React.FC = () => {
                       }
                     >
                       <ListItemAvatar>
-                        <Avatar src={getAvatarUrl(friend.icon_url)} alt={friend.user_name} />
+                        <Avatar src={getAvatarUrl(friend.icon_url)} />
                       </ListItemAvatar>
-                      <ListItemText
-                        primary={friend.user_name}
-                        secondary={friend.email}
-                      />
+                      <ListItemText primary={friend.user_name} secondary={friend.email} />
                     </ListItem>
                   ))}
                 </List>
@@ -180,57 +216,51 @@ const AddFriendsPage: React.FC = () => {
         )}
 
         {/* Вкладка: Найти друга */}
-        {tabIndex === 1 && (
+        {currentTab === 1 && (
           <Box sx={{ mt: 4 }}>
             <Typography variant="h5" gutterBottom>
               Найти друга
             </Typography>
-
-            <Paper sx={{ p: 2, mb: 4 }} elevation={3}>
+            <Paper sx={{ p: 2, mb: 3 }}>
               <TextField
                 fullWidth
                 label="Имя пользователя или Email"
-                value={friendQuery}
-                onChange={handleChangeFriendQuery}
                 placeholder="Введите имя или почту"
+                value={searchQuery}
+                onChange={handleSearchQueryChange}
               />
-
               <Button
                 variant="contained"
-                sx={{ mt: 2 }}
                 fullWidth
-                onClick={handleSearchClick}
-                disabled={isLoading}
+                sx={{ mt: 2 }}
+                onClick={handleClickSearch}
+                disabled={isSearching}
               >
-                {isLoading ? 'Идет поиск...' : 'Поиск'}
+                {isSearching ? 'Идет поиск...' : 'Поиск'}
               </Button>
             </Paper>
 
             <Typography variant="h6" gutterBottom>
               Результаты поиска
             </Typography>
-
-            <Paper sx={{ p: 2 }} elevation={1}>
-              {searchResults.length === 0 && !isLoading ? (
-                <Typography variant="body2" color="text.secondary">
-                  Ничего не найдено.
-                </Typography>
+            <Paper sx={{ p: 2, mb: 3 }}>
+              {isSearching ? (
+                <Typography>Загрузка...</Typography>
+              ) : filteredSearchResults.length === 0 ? (
+                <Typography color="text.secondary">Ничего не найдено.</Typography>
               ) : (
                 <List>
-                  {searchResults.map((user) => (
+                  {filteredSearchResults.map((user) => (
                     <ListItem
                       key={user.id}
                       secondaryAction={
-                        <Button
-                          variant="outlined"
-                          onClick={() => handleAddFriend(user.id)}
-                        >
+                        <Button variant="outlined" onClick={() => handleSendRequest(user.id)}>
                           Добавить
                         </Button>
                       }
                     >
                       <ListItemAvatar>
-                        <Avatar src={getAvatarUrl(user.icon_url)} alt={user.user_name} />
+                        <Avatar src={getAvatarUrl(user.icon_url)} />
                       </ListItemAvatar>
                       <ListItemText primary={user.user_name} secondary={user.email} />
                     </ListItem>
@@ -238,55 +268,103 @@ const AddFriendsPage: React.FC = () => {
                 </List>
               )}
             </Paper>
+
+            {sentRequests.length > 0 && (
+              <>
+                <Typography variant="h6" gutterBottom>
+                  Заявки отправлены
+                </Typography>
+                <Paper sx={{ p: 2 }}>
+                  <List>
+                    {sentRequests.map((user) => (
+                      <ListItem
+                        key={user.id}
+                        secondaryAction={<Button variant="outlined" disabled>Отправлено</Button>}
+                      >
+                        <ListItemAvatar>
+                          <Avatar src={getAvatarUrl(user.icon_url)} />
+                        </ListItemAvatar>
+                        <ListItemText primary={user.user_name} secondary={user.email} />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              </>
+            )}
           </Box>
         )}
 
         {/* Вкладка: Запросы */}
-        {tabIndex === 2 && (
+        {currentTab === 2 && (
           <Box sx={{ mt: 4 }}>
             <Typography variant="h5" gutterBottom>
               Запросы в друзья
             </Typography>
-            <Paper sx={{ p: 2 }} elevation={2}>
-              {requestsLoading ? (
+            <Paper sx={{ p: 2 }}>
+              {isLoadingRequests ? (
                 <Typography>Загрузка...</Typography>
-              ) : friendRequests.length === 0 ? (
-                <Typography variant="body1">Нет новых запросов.</Typography>
+              ) : incomingRequests.length === 0 && sentRequests.length === 0 ? (
+                <Typography>Нет новых входящих или исходящих запросов.</Typography>
               ) : (
-                <List>
-                  {friendRequests.map((request) => (
-                    <ListItem
-                      key={request.id}
-                      secondaryAction={
-                        <>
-                          <Button
-                            variant="contained"
-                            color="success"
-                            sx={{ mr: 1 }}
-                            onClick={() => handleAcceptRequest(request.id)}
+                <>
+                  {sentRequests.length > 0 && (
+                    <>
+                      <Typography variant="subtitle1">Исходящие</Typography>
+                      <List>
+                        {sentRequests.map((req) => (
+                          <ListItem
+                            key={req.id}
+                            secondaryAction={<Button variant="outlined" disabled>Отправлено</Button>}
                           >
-                            Принять
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            onClick={() => handleRejectRequest(request.id)}
+                            <ListItemAvatar>
+                              <Avatar src={getAvatarUrl(req.icon_url)} />
+                            </ListItemAvatar>
+                            <ListItemText primary={req.user_name} secondary={req.email} />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </>
+                  )}
+
+                  {incomingRequests.length > 0 && (
+                    <>
+                      <Typography variant="subtitle1" sx={{ mt: sentRequests.length > 0 ? 2 : 0 }}>
+                        Входящие
+                      </Typography>
+                      <List>
+                        {incomingRequests.map((req) => (
+                          <ListItem
+                            key={req.id}
+                            secondaryAction={
+                              <>
+                                <Button
+                                  variant="contained"
+                                  color="success"
+                                  sx={{ mr: 1 }}
+                                  onClick={() => handleAcceptRequest(req.id)}
+                                >
+                                  Принять
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => handleRejectRequest(req.id)}
+                                >
+                                  Отклонить
+                                </Button>
+                              </>
+                            }
                           >
-                            Отклонить
-                          </Button>
-                        </>
-                      }
-                    >
-                      <ListItemAvatar>
-                        <Avatar src={getAvatarUrl(request.icon_url)} alt={request.user_name} />
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={request.user_name}
-                        secondary={request.email}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
+                            <ListItemAvatar>
+                              <Avatar src={getAvatarUrl(req.icon_url)} />
+                            </ListItemAvatar>
+                            <ListItemText primary={req.user_name} secondary={req.email} />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </>
+                  )}
+                </>
               )}
             </Paper>
           </Box>
