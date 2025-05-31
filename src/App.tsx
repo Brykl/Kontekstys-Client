@@ -9,6 +9,7 @@ import ProfilePage from "./pages/private/profile/ProfilePage";
 import AllPostsPage from "./pages/private/Posts/PublicPostsPage";
 import { UserProvider } from "./contexts/AuthContext";
 import AddFriendsPage from "./pages/private/friends/FriendsPage";
+import AdminPage from "./pages/admin/adminPage";
 
 const App: React.FC = () => {
   return (
@@ -40,6 +41,14 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <AddFriendsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <AdminPage/>
               </PrivateRoute>
             }
           />

@@ -68,10 +68,6 @@ export default function AppBarPrivate(): JSX.Element {
             <GroupIcon fontSize="small" />
             <Typography variant="body1">Друзья</Typography>
           </Box>
-          <Box sx={navItemStyle} onClick={() => navigate("/chat")}>
-            <ChatIcon fontSize="small" />
-            <Typography variant="body1">Чат</Typography>
-          </Box>
           {user?.role == "admin" &&<Box sx={navItemStyle} onClick={() => navigate("/admin")}>
             <AdminPanelSettingsIcon fontSize="small" />
             <Typography variant="body1">Администрирование</Typography>

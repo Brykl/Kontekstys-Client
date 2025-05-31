@@ -4,8 +4,10 @@ import {
   Typography,
   CircularProgress,
   Grid,
-  useMediaQuery,
-  useTheme,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import paperImage from "../../../assets/homePage/paper.avif";
 import bagr1 from "../../../assets/homePage/treygol1.jpg";
@@ -13,6 +15,7 @@ import { getAllPosts } from "../../../controllers/getAllPosts";
 import AppBarPrivate from "../components/AppBar";
 import PostCard from "../components/PostCard";
 
+// Интерфейс поста с access_type
 interface Post {
   id: number;
   title: string;
@@ -23,17 +26,18 @@ interface Post {
   like_count?: number;
   dislike_count?: number;
   viewer_reaction?: "like" | "dislike" | null;
+  access_type: "public" | "friends" | "private"; // Обновлённое поле
 }
 
 const AllPostsPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortType, setSortType] = useState<"default" | "likes" | "access">("default");
 
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  // const theme = useTheme();
+  // const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // Загрузка постов при монтировании
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -48,6 +52,7 @@ const AllPostsPage: React.FC = () => {
         like_count: post.like_count ?? 0,
         dislike_count: post.dislike_count ?? 0,
         viewer_reaction: post.viewer_reaction ?? null,
+        access_type: post.access_type ?? "public",
       }));
       setPosts(postsWithDefaults);
     } catch {
@@ -57,9 +62,21 @@ const AllPostsPage: React.FC = () => {
     }
   };
 
-  // Обработчик удаления поста
   const handleDeletePost = (postId: number) => {
     setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+  };
+
+  // Сортировка постов по выбранному критерию
+  const getSortedPosts = () => {
+    const postsCopy = [...posts];
+    if (sortType === "likes") {
+      return postsCopy.sort((a, b) => (b.like_count ?? 0) - (a.like_count ?? 0));
+    }
+    if (sortType === "access") {
+      const order = { public: 0, friends: 1, private: 2 };
+      return postsCopy.sort((a, b) => order[a.access_type] - order[b.access_type]);
+    }
+    return postsCopy;
   };
 
   return (
@@ -102,6 +119,26 @@ const AllPostsPage: React.FC = () => {
           Все посты
         </Typography>
 
+        {/* Селектор сортировки */}
+        <FormControl
+          sx={{ mt: 2, minWidth: 200, alignSelf: "center" }}
+          size="small"
+        >
+          <InputLabel id="sort-label">Сортировать</InputLabel>
+          <Select
+            labelId="sort-label"
+            value={sortType}
+            label="Сортировать"
+            onChange={(e) =>
+              setSortType(e.target.value as typeof sortType)
+            }
+          >
+            <MenuItem value="default">По умолчанию</MenuItem>
+            <MenuItem value="likes">По лайкам</MenuItem>
+            <MenuItem value="access">По приватности</MenuItem>
+          </Select>
+        </FormControl>
+
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
             <CircularProgress />
@@ -130,7 +167,7 @@ const AllPostsPage: React.FC = () => {
           }}
         >
           <Grid container spacing={2} sx={{ height: "100%" }}>
-            {posts.map((post) => (
+            {getSortedPosts().map((post) => (
               <Grid item xs={12} sm={6} md={4} key={post.id}>
                 <PostCard post={post} onDelete={handleDeletePost} />
               </Grid>
