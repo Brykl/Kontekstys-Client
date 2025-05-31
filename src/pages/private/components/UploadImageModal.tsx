@@ -8,8 +8,9 @@ import {
   Box,
   Typography,
   TextField,
-  Checkbox,
+  RadioGroup,
   FormControlLabel,
+  Radio,
 } from "@mui/material";
 import axios from "axios";
 
@@ -29,7 +30,10 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
+  // Теперь вместо isPublic используем accessType
+  const [accessType, setAccessType] = useState<"public" | "private" | "friends">(
+    "public"
+  );
   const [uploadMessage, setUploadMessage] = useState("");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +51,7 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("is_public", String(isPublic));
+    formData.append("accessType", accessType);
     if (selectedFile) {
       formData.append("image", selectedFile);
     }
@@ -61,7 +65,7 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
     }
 
     try {
-      const response = await axios.post(
+      await axios.post(
         `${dataBaseServerUrl}/api/posts/create`,
         formData,
         {
@@ -73,10 +77,11 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
       );
 
       setUploadMessage("Пост успешно создан");
+      // Сбросим поля формы
       setTitle("");
       setDescription("");
       setSelectedFile(null);
-      setIsPublic(true);
+      setAccessType("public");
 
       if (onPostCreated) onPostCreated();
       onClose();
@@ -121,15 +126,30 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
               Выбрано: {selectedFile.name}
             </Typography>
           )}
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
-              />
+          <Typography variant="subtitle1">Уровень доступа</Typography>
+          <RadioGroup
+            value={accessType}
+            onChange={(e) =>
+              setAccessType(e.target.value as "public" | "private" | "friends")
             }
-            label="Сделать пост публичным"
-          />
+            row
+          >
+            <FormControlLabel
+              value="public"
+              control={<Radio />}
+              label="Публичный"
+            />
+            <FormControlLabel
+              value="private"
+              control={<Radio />}
+              label="Только я"
+            />
+            <FormControlLabel
+              value="friends"
+              control={<Radio />}
+              label="Только друзья"
+            />
+          </RadioGroup>
           {uploadMessage && (
             <Typography color="textSecondary">{uploadMessage}</Typography>
           )}

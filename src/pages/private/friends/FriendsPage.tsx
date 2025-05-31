@@ -23,8 +23,13 @@ import { acceptFriendRequest } from '../../../controllers/friends/acceptFriendRe
 import { rejectFriendRequest } from '../../../controllers/friends/rejectFriendRequest';
 import { removeFriend } from '../../../controllers/friends/removeFriend'; // импорт контроллера удаления друга
 import DEFAULT_AVATAR from '../../../assets/private/avatar.svg';
+import { useNavigate} from "react-router-dom";
 
-const BASE_URL = 'http://172.30.0.66:3891';
+
+import bgIMg from '../../../assets/homePage/treygol1.jpg'
+import paperIMg from '../../../assets/homePage/paper.avif'
+// const BASE_URL = 'http://172.30.0.66:3891';
+const BASE_URL = import.meta.env.VITE_SERVER_URL;
 
 interface Friend {
   id: number;
@@ -34,6 +39,7 @@ interface Friend {
 }
 
 const AddFriendsPage: React.FC = () => {
+    const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState(0);
 
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -167,23 +173,100 @@ const AddFriendsPage: React.FC = () => {
   const filteredSearchResults = searchResults.filter((u) => !sentRequestIds.has(u.id));
 
   return (
-    <Box>
+    <Box sx={{minHeight: '100vh',height: '100%',backgroundImage: `url(${bgIMg})`,
+    backgroundSize: 'cover cont',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center',}}>
       <AppBar />
 
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Tabs value={currentTab} onChange={handleChangeTab} centered>
-          <Tab label="Твои друзья" />
-          <Tab label="Найти друга" />
-          <Tab label="Запросы" />
-        </Tabs>
+      <Container
+  maxWidth="md"
+  sx={{
+    mt: 4,
+    backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center',
+    minHeight: '80vh', // чтобы фон точно был виден
+    borderRadius: 2,
+    p: 3,
+  }}
+>
+        <Tabs
+  value={currentTab}
+  onChange={handleChangeTab}
+  centered
+  sx={{
+    backgroundImage: `url(${paperIMg})`,
+    backgroundSize: 'cover contented',
+    backgroundPosition: 'center',
+    borderRadius: 2,
+    p: 1,
+  }}
+>
+  <Tab
+    label="Твои друзья"
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.5,
+      px: 1.5,
+      py: 0.5,
+      borderRadius: 2,
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      "&:hover": {
+        backgroundColor: 'rgba(30,30,31,0.1)',
+        transform: 'scale(1.05)',
+      },
+    }}
+  />
+  <Tab
+    label="Найти друга"
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.5,
+      px: 1.5,
+      py: 0.5,
+      borderRadius: 2,
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      "&:hover": {
+        backgroundColor: 'rgba(30,30,31,0.1)',
+        transform: 'scale(1.05)',
+      },
+    }}
+  />
+  <Tab
+    label="Запросы"
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.5,
+      px: 1.5,
+      py: 0.5,
+      borderRadius: 2,
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      "&:hover": {
+        backgroundColor: 'rgba(30,30,31,0.1)',
+        transform: 'scale(1.05)',
+      },
+    }}
+  />
+</Tabs>
+
+
 
         {/* Вкладка: Твои друзья */}
         {currentTab === 0 && (
-          <Box sx={{ mt: 4 }}>
+          <Box sx={{ mt: 4,  }}>
             <Typography variant="h5" gutterBottom>
               Твои друзья
             </Typography>
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={{ p: 2,     backgroundImage: `url(${paperIMg})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',}}>
               {isLoadingFriends ? (
                 <Typography>Загрузка...</Typography>
               ) : friends.length === 0 ? (
@@ -192,22 +275,36 @@ const AddFriendsPage: React.FC = () => {
                 <List>
                   {friends.map((friend) => (
                     <ListItem
-                      key={friend.id}
-                      secondaryAction={
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => handleRemoveFriend(friend.id)}
-                        >
-                          Удалить
-                        </Button>
-                      }
-                    >
-                      <ListItemAvatar>
-                        <Avatar src={getAvatarUrl(friend.icon_url)} />
-                      </ListItemAvatar>
-                      <ListItemText primary={friend.user_name} secondary={friend.email} />
-                    </ListItem>
+  onClick={() => navigate(`/profile/${friend.user_name}`)}
+  key={friend.id}
+  sx={{
+    borderRadius: 2,
+    transition: "all 0.3s ease",
+    cursor: "pointer",
+    "&:hover": {
+      backgroundColor: "rgba(30,30,31,0.1)",
+      transform: "scale(1.02)",
+    },
+  }}
+  secondaryAction={
+    <Button
+      variant="outlined"
+      color="error"
+      onClick={(e) => {
+        e.stopPropagation(); // предотвращает срабатывание onClick у ListItem
+        handleRemoveFriend(friend.id);
+      }}
+    >
+      Удалить
+    </Button>
+  }
+>
+  <ListItemAvatar>
+    <Avatar src={getAvatarUrl(friend.icon_url)} />
+  </ListItemAvatar>
+  <ListItemText primary={friend.user_name} secondary={friend.email} />
+</ListItem>
+
                   ))}
                 </List>
               )}
@@ -221,7 +318,9 @@ const AddFriendsPage: React.FC = () => {
             <Typography variant="h5" gutterBottom>
               Найти друга
             </Typography>
-            <Paper sx={{ p: 2, mb: 3 }}>
+            <Paper sx={{ p: 2, mb: 3,     backgroundImage: `url(${paperIMg})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center', }}>
               <TextField
                 fullWidth
                 label="Имя пользователя или Email"
@@ -243,7 +342,9 @@ const AddFriendsPage: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Результаты поиска
             </Typography>
-            <Paper sx={{ p: 2, mb: 3 }}>
+            <Paper sx={{ p: 2, mb: 3,     backgroundImage: `url(${paperIMg})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center' }}>
               {isSearching ? (
                 <Typography>Загрузка...</Typography>
               ) : filteredSearchResults.length === 0 ? (
@@ -251,7 +352,7 @@ const AddFriendsPage: React.FC = () => {
               ) : (
                 <List>
                   {filteredSearchResults.map((user) => (
-                    <ListItem
+                    <ListItem 
                       key={user.id}
                       secondaryAction={
                         <Button variant="outlined" onClick={() => handleSendRequest(user.id)}>
@@ -274,7 +375,9 @@ const AddFriendsPage: React.FC = () => {
                 <Typography variant="h6" gutterBottom>
                   Заявки отправлены
                 </Typography>
-                <Paper sx={{ p: 2 }}>
+                <Paper sx={{ p: 2,   backgroundImage: `url(${paperIMg})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',}}>
                   <List>
                     {sentRequests.map((user) => (
                       <ListItem
