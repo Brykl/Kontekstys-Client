@@ -38,6 +38,9 @@ const ProfilePage: React.FC = () => {
   const { user } = useUser();
   const navigate = useNavigate();
 
+  const token = localStorage.getItem("token") || "";
+
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -230,6 +233,7 @@ const ProfilePage: React.FC = () => {
         open={openIconModal}
         onClose={() => setOpenIconModal(false)}
         onUploaded={() => setOpenIconModal(false)}
+        token={token}
       />
     </Box>
   );

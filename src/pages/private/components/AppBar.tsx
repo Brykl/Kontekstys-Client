@@ -55,29 +55,24 @@ export default function AppBarPrivate(): JSX.Element {
         </Typography>
 
         {/* Навигационные иконки */}
-        <Box
-          sx={{ display: "flex", gap: 2, alignItems: "center", flexGrow: 1 }}
-        >
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexGrow: 1 }}>
           <Box sx={navItemStyle} onClick={() => navigate("/posts")}>
             <ArticleIcon fontSize="small" />
             <Typography variant="body1">Посты</Typography>
           </Box>
-          <Box
-            sx={navItemStyle}
-            onClick={() => navigate(`/profile/${user.user_name}`)}
-          >
+          <Box sx={navItemStyle} onClick={() => navigate(`/profile/${user.user_name}`)}>
             <Person2Icon fontSize="small" />
             <Typography variant="body1">Профиль</Typography>
           </Box>
-          <Box sx={navItemStyle}>
+          <Box sx={navItemStyle} onClick={() => navigate("/friends")}>
             <GroupIcon fontSize="small" />
             <Typography variant="body1">Друзья</Typography>
           </Box>
-          <Box sx={navItemStyle}>
+          <Box sx={navItemStyle} onClick={() => navigate("/chat")}>
             <ChatIcon fontSize="small" />
             <Typography variant="body1">Чат</Typography>
           </Box>
-          <Box sx={navItemStyle}>
+          <Box sx={navItemStyle} onClick={() => navigate("/admin")}>
             <AdminPanelSettingsIcon fontSize="small" />
             <Typography variant="body1">Администрирование</Typography>
           </Box>
