@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -19,7 +19,7 @@ const dataBaseServerUrl = import.meta.env.VITE_SERVER_URL;
 interface UploadImageModalProps {
   open: boolean;
   onClose: () => void;
-  onPostCreated?: () => void; // для обновления списка постов после создания
+  onPostCreated?: () => void; // колбэк для обновления списка постов после создания
 }
 
 const UploadImageModal: React.FC<UploadImageModalProps> = ({
@@ -30,64 +30,94 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  // Теперь вместо isPublic используем accessType
-  const [accessType, setAccessType] = useState<"public" | "private" | "friends">(
-    "public"
-  );
+  const [accessType, setAccessType] = useState<
+    "public" | "private" | "friends"
+  >("public");
+  const [serverError, setServerError] = useState<string | null>(null);
   const [uploadMessage, setUploadMessage] = useState("");
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
+  // Сбрасываем состояние, когда модалка открывается
+  useEffect(() => {
+    if (open) {
+      setSelectedFile(null);
+      setTitle("");
+      setDescription("");
+      setAccessType("public");
+      setServerError(null);
+      setUploadMessage("");
     }
+  }, [open]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    setSelectedFile(file);
+    setServerError(null); // сбрасываем предыдущую ошибку
   };
 
   const handleCreatePost = async () => {
-    if (!title || !description) {
+    // Сброс ошибок
+    setServerError(null);
+    setUploadMessage("");
+
+    // Клиентская валидация
+    if (!title.trim() || !description.trim()) {
       setUploadMessage("Пожалуйста, заполните все поля");
       return;
     }
 
     const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
+    formData.append("title", title.trim());
+    formData.append("description", description.trim());
     formData.append("accessType", accessType);
     if (selectedFile) {
       formData.append("image", selectedFile);
     }
 
-    // Получаем токен из localStorage (замени ключ, если у тебя другой)
+    // Получаем токен из localStorage
     const token = localStorage.getItem("token");
-
     if (!token) {
       setUploadMessage("Ошибка: пользователь не авторизован");
       return;
     }
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${dataBaseServerUrl}/api/posts/create`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`, // передаём токен авторизации
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
       setUploadMessage("Пост успешно создан");
-      // Сбросим поля формы
+      // Сброс полей
       setTitle("");
       setDescription("");
       setSelectedFile(null);
       setAccessType("public");
 
-      if (onPostCreated) onPostCreated();
+      onPostCreated?.();
       onClose();
-    } catch (error) {
-      console.error("Ошибка при создании поста:", error);
-      setUploadMessage("Ошибка создания поста");
+    } catch (error: any) {
+      // error.request.response – это строка JSON вида {"message":"…"}
+      let messageToShow = "Ошибка создания поста";
+
+      if (error.request && typeof error.request.response === "string") {
+        try {
+          const parsed = JSON.parse(error.request.response);
+          if (parsed && typeof parsed.message === "string") {
+            messageToShow = parsed.message;
+          }
+        } catch {
+          // Если парсинг провалился, оставляем messageToShow = "Ошибка создания поста"
+        }
+      }
+
+      setServerError(messageToShow);
+      console.error("Ошибка при создании поста:", messageToShow);
     }
   };
 
@@ -99,21 +129,28 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
           <TextField
             label="Заголовок"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setServerError(null);
+            }}
             fullWidth
             required
           />
           <TextField
             label="Описание"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              setServerError(null);
+            }}
             fullWidth
             multiline
             rows={4}
             required
           />
+
           <Button component="label" variant="outlined">
-            Выбрать изображение
+            Выбрать изображение (jpg, png)
             <input
               type="file"
               accept="image/*"
@@ -126,6 +163,7 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
               Выбрано: {selectedFile.name}
             </Typography>
           )}
+
           <Typography variant="subtitle1">Уровень доступа</Typography>
           <RadioGroup
             value={accessType}
@@ -150,11 +188,21 @@ const UploadImageModal: React.FC<UploadImageModalProps> = ({
               label="Только друзья"
             />
           </RadioGroup>
+
+          {/* Покажем служебное сообщение (валидация) */}
           {uploadMessage && (
             <Typography color="textSecondary">{uploadMessage}</Typography>
           )}
+
+          {/* Покажем именно ошибку с сервера, если она есть */}
+          {serverError && (
+            <Typography variant="body2" color="error">
+              {serverError}
+            </Typography>
+          )}
         </Box>
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>
         <Button variant="contained" onClick={handleCreatePost}>
